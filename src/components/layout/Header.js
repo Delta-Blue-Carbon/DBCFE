@@ -254,9 +254,14 @@ function Header({
   const { Title, Text } = Typography;
 
   const [visible, setVisible] = useState(false);
-  const [sidenavType, setSidenavType] = useState("transparent");
+  const [sidenavType, setSidenavType] = useState("white");
 
-  useEffect(() => window.scrollTo(0, 0));
+
+  useEffect(() => { 
+    window.scrollTo(0, 0);
+    handleSidenavType("#fff");
+    setSidenavType("white");
+  }, []);
 
   const showDrawer = () => setVisible(true);
   const hideDrawer = () => setVisible(false);
@@ -304,7 +309,7 @@ function Header({
           </Badge> */}
           {/* <Button type="link" onClick={showDrawer}>
             {logsetting}
-          </Button>
+          </Button> */}
           <Button
             type="link"
             className="sidebar-toggler"
@@ -312,7 +317,7 @@ function Header({
           >
             {toggler}
           </Button>
-          <Drawer
+          {/* <Drawer
             className="settings-drawer"
             mask={true}
             width={360}
