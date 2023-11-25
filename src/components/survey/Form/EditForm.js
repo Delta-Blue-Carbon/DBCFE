@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { makeStyles } from '@material-ui/core/styles';
-import { Grid } from '@material-ui/core';
+import { CircularProgress, Grid } from '@material-ui/core';
 
 import { Paper, Typography } from '@material-ui/core';
 
@@ -127,7 +127,7 @@ function EditForm(props) {
       setFormID(formId)
       formService.getForm(formId)
         .then((data) => {
-          console.log(data);     
+          console.log(data);
           setFormDetails(data)
         },
           error => {
@@ -281,7 +281,9 @@ function EditForm(props) {
           </div>
         </div>
       ) : (
-        <p>you're not the owner of the form</p>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
+        </div>
       )}
     </div>
   );
