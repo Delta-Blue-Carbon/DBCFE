@@ -16,6 +16,8 @@ import UserProvider from "./context/UserContext";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import ViewUser from "./pages/Users/ViewUser";
 import AddUser from "./pages/Users/AddUser";
+import AddInventory from "./pages/Inventory/AddInventory";
+import ViewInventory from "./pages/Inventory/ViewInventory";
 import ViewRole from "./pages/Roles/ViewRole"; 
 import AddRole from "./pages/Roles/AddRole";   
 import ViewMake from "./pages/Make/ViewMake";
@@ -48,21 +50,22 @@ function App() {
           <Redirect exact from="/dashboard" to="/users" /> */}
 
             {/* <Route exact path="/" component={Home}/>  */}
-            <Route exact path="/forms" component={FormDashboard}/>
-            <Route exact path="/login" component={Login}/>
-            <Route path="/edit-form/:formId" component={EditForm}/>
+            <ProtectedRoute exact path="/forms" component={FormDashboard} page={"Surveys"} permissionType={'view'}/>
+            {/* <ProtectedRoute exact path="/login" component={Login} page={"Surveys"} permissionType={'view'}/> */}
+            <ProtectedRoute exact path="/edit-form/:formId" component={EditForm} page={"Surveys"} permissionType={'edit'}/>
             {/* <Route exact path="/fuck" component={RadioCheck} /> */}
             <ProtectedRoute exact path="/dashboard" Component={Dashboard} />
 
             <ProtectedRoute exact path="/users" Component={ViewUser} page={"Users"} permissionType={'view'}/>
             <ProtectedRoute exact path="/add-user" Component={AddUser} page={"Users"} isEditable={false} permissionType={'add'}/>
-            {/* <ProtectedRoute exact path="/users" Component={ViewUser} /> */}
-            {/* <ProtectedRoute exact path="/Adduser" Component={AddUser} /> */}
             <ProtectedRoute exact path="/edit-user/:applicationUserId" page={"Users"}  Component={AddUser} isEditable={true} permissionType={'edit'}/>
 
-            <ProtectedRoute exact path="/roles" Component={ViewRole} page={"Roles"} permissionType={'view'}/>
-            <ProtectedRoute exact path="/add-role" Component={AddRole} page={"Roles"} permissionType={'add'}/>
-            <ProtectedRoute exact path="/edit-role/:applicationRoleId" page={"Roles"}  Component={AddRole} isEditable={true} permissionType={'edit'}/>
+            {/* <ProtectedRoute exact path="/users" Component={ViewUser} /> */}
+            {/* <ProtectedRoute exact path="/Adduser" Component={AddUser} /> */}
+
+            <ProtectedRoute exact path="/inventories" Component={ViewInventory} page={"Inventories"} permissionType={'view'}/>
+            <ProtectedRoute exact path="/add-inventory" Component={AddInventory} page={"Inventories"} permissionType={'add'}/>
+            <ProtectedRoute exact path="/edit-inventory/:inventoryId" page={"Inventories"}  Component={AddInventory} isEditable={true} permissionType={'edit'}/>
 
   
 

@@ -132,7 +132,7 @@ export default function SignIn(props) {
       if (!response.error) {
         console.log(response);
         cookies.set('token', response.data.token, { path: '/'});
-        // cookies.set('user', response.data.user, { path: '/'});
+        cookies.set('user', response.data.user, { path: '/'});
         props.history.push("/dashboard");
       } else {
         error(response.data);
