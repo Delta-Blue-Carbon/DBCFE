@@ -16,7 +16,7 @@ import {
   Spin
 } from "antd";
 
-import { getAllInventories, deleteInventory } from "../../apis/inventory";
+import { getAllInventories, deleteInventory, updateInventory } from "../../apis/inventory";
 import { useHistory } from "react-router-dom";
 import UserContext from "../../context/UserContext";
 
@@ -281,29 +281,29 @@ function ViewUser({permissions = permissionsProblem}) {
         );
       },
     },
-    permissions?.canDelete && {
-      title: "Delete",
-      dataIndex: "delete",
-      render: (_, record) => {
-        const editable = isEditing(record);
-        return !editable ? (
-          dataSource.length >= 1 ? (
-            <Popconfirm
-              title="Sure to delete?"
-              onConfirm={() => handleDelete(record?.applicationUserId)}
-            >
-              <a><Button type="primary" danger>
-            Delete
-          </Button></a>
-            </Popconfirm>
-          ) : null
-        ) : dataSource.length >= 1 ? (
-          <Popconfirm title="Can't delete while editing!">
-            <a>Delete</a>
-          </Popconfirm>
-        ) : null;
-      },
-    }
+    // permissions?.canDelete && {
+    //   title: "Delete",
+    //   dataIndex: "delete",
+    //   render: (_, record) => {
+    //     const editable = isEditing(record);
+    //     return !editable ? (
+    //       dataSource.length >= 1 ? (
+    //         <Popconfirm
+    //           title="Sure to delete?"
+    //           onConfirm={() => handleDelete(record?.applicationUserId)}
+    //         >
+    //           <a><Button type="primary" danger>
+    //         Delete
+    //       </Button></a>
+    //         </Popconfirm>
+    //       ) : null
+    //     ) : dataSource.length >= 1 ? (
+    //       <Popconfirm title="Can't delete while editing!">
+    //         <a>Delete</a>
+    //       </Popconfirm>
+    //     ) : null;
+    //   },
+    // }
   ].filter(Boolean);
   
   // const columns = [

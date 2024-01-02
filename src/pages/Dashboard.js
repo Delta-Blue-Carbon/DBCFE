@@ -336,7 +336,8 @@ function Dashboard() {
   return (
     <>
       <div className="layout-content">
-        <Row className="rowgap-vbox" gutter={[24, 0]}>
+      <iframe title="Master Dashboard" width="1140" height="541.25" src="https://app.powerbi.com/reportEmbed?reportId=1577ac3f-f605-4fd0-90ab-4ee2ab30237e&autoAuth=true&embeddedDemo=true" frameborder="0" allowFullScreen="true"></iframe>
+        {/* <Row className="rowgap-vbox" gutter={[24, 0]}>
           {count.map((c, index) => (
             <Col
               key={index}
@@ -545,7 +546,7 @@ function Dashboard() {
               </div>
             </Card>
           </Col>
-        </Row>
+        </Row> */}
       </div>
     </>
   );
