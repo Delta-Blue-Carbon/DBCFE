@@ -19,6 +19,7 @@ import {
 import { getAllUsers, deleteUser } from "../../apis/user";
 import { useHistory } from "react-router-dom";
 import UserContext from "../../context/UserContext";
+import Cookies from "universal-cookie";
 
 const originalDataSource1 = [{
   applicationUserId: 4,
@@ -42,16 +43,23 @@ const originalDataSource1 = [{
   isActive: false,
 },]
 
-const permissionsProblem = {
+var permissionsProblem = {
   canEdit: true,
-  canDelete: true,
+  canDelete: false,
   canAdd: true,
   canView: true,
 }
 
 function ViewUser({permissions = permissionsProblem}) {
   // console.log("permissions", permissions);
-  
+  //if user is admin then give all permissions
+  const cookies = new Cookies();
+  const user = cookies.get('user');
+  const username = user?.username;
+  if (username != "Admin") {
+    // permissions.canEdit = false;
+    permissions.canDelete = false;
+  }
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const [editingKey, setEditingKey] = useState("");

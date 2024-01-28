@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NotFoundPage = () => {
+const UnAuthorized = () => {
     return (
         <div style={{textAlign: "center", fontWeight:"bolder"}}>
             <h2>401 Unauthorized</h2>
@@ -9,4 +9,4 @@ const NotFoundPage = () => {
     );
 };
 
-export default NotFoundPage;
+export default UnAuthorized;

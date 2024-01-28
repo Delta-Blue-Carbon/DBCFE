@@ -5,9 +5,13 @@ import { Menu, Button,Spin,message } from "antd";
 import { NavLink, useLocation } from "react-router-dom";
 import { getUserPermissions } from "../../apis/user";
 import logo from "../../assets/images/logo.png";
-
+import Cookies from 'universal-cookie';
+import Permission from "../../utils/Permissions";
 
 function Sidenav({ color }) {
+  const cookies = new Cookies();
+  const user = cookies.get('user');
+  const username = user?.username;
   const { pathname } = useLocation();
   const [messageApi, contextHolder] = message.useMessage();
   const page = pathname.replace("/", "");
@@ -34,8 +38,23 @@ function Sidenav({ color }) {
 
 
   // Check if user has permission based on permissionName and canView flag
-  const hasPermission = (permissionName) => {
-    return permissions.some(p => p.permissionName === permissionName && p.canView);
+  // const hasPermission = (permissionName) => {
+  //   return permissions.some(p => p.permissionName === permissionName && p.canView);
+  // };
+
+  const hasPermission = (allowedRoles) => {
+    switch (username) {
+      case 'Admin':
+        return true; // Admin has access to everything
+      case 'Finance':
+        return allowedRoles.includes('Finance');
+      case 'Community and Gender Development':
+        return allowedRoles.includes('Community and Gender Development');
+      case 'Human Resources':
+        return allowedRoles.includes('Human Resources');
+      default:
+        return false; // Default no access
+    }
   };
 
   const dashboard = [
@@ -189,6 +208,8 @@ function Sidenav({ color }) {
       <hr />
 
        <Menu theme="light" mode="inline">
+        {
+          hasPermission(Permission.Dashboard.canView) && 
         <Menu.Item key="1">
           <NavLink to="/dashboard">
             <span
@@ -202,6 +223,10 @@ function Sidenav({ color }) {
             <span className="label">Dashboard</span>
           </NavLink>
         </Menu.Item>
+        }
+
+        {
+          hasPermission(Permission.Users.canView) &&
         <Menu.Item key="2">
           <NavLink to="/users">
             <span
@@ -215,6 +240,9 @@ function Sidenav({ color }) {
             <span className="label">User Management</span>
           </NavLink>
         </Menu.Item>
+        }
+        {
+          hasPermission(Permission.Inventories.canView) &&
         <Menu.Item key="3">
           <NavLink to="/inventories">
             <span
@@ -228,6 +256,9 @@ function Sidenav({ color }) {
             <span className="label">Inventory</span>
           </NavLink>
         </Menu.Item>
+        }
+        {
+          hasPermission(Permission.Forms.canView) &&
         <Menu.Item key="4">
           <NavLink to="/forms">
             <span
@@ -241,6 +272,7 @@ function Sidenav({ color }) {
             <span className="label">Survey</span>
           </NavLink>
         </Menu.Item>
+        }
         {/* {(loading || error) ? <Spin style={{margin:"15px auto auto",width:"100%"}} size="large" /> :<> */}
 
          {/* {hasPermission("Users") && <Menu.Item key="2">

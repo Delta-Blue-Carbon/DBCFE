@@ -1,6 +1,12 @@
 .maketable .ant-table-thead > tr > th{
   text-align: center !important;
 }
+.layout-signin{
+  background-color: #fafafa !important;
+}
+main.ant-layout-content.signin{
+  background-color: #fafafa !important;
+}
 /* .usertable .ant-table-thead > tr > th{
   text-align: center !important;
 } */

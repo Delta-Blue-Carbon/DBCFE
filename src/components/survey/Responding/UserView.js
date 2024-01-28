@@ -8,6 +8,7 @@ import formService from '../../../apis/survey/formService';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Radio from '@material-ui/core/Radio';
+import Checkbox from '@material-ui/core/Checkbox';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
@@ -45,8 +46,35 @@ function UserView(props) {
 
   const [questions, setQuestions] = React.useState([]);
   const [value, setValue] = React.useState('');
+  const [location, setLocation] = React.useState('');
   const cookies = new Cookies();
   //console.log(value);
+  const [visibleQuestions, setVisibleQuestions] = React.useState({});
+
+  React.useEffect(() => {
+    let initialVisibility = {};
+    questions.forEach(q => initialVisibility[q.id] = true);
+    setVisibleQuestions(initialVisibility);
+  }, [questions]);
+
+  const evaluateCondition = (condition, skipValue, response) => {
+    if (condition === 'equals') return response === skipValue;
+    if (condition === 'greaterThan') return parseFloat(response) > parseFloat(skipValue);
+    if (condition === 'lessThan') return parseFloat(response) < parseFloat(skipValue);
+    if (condition === 'greaterThanEqual') return parseFloat(response) >= parseFloat(skipValue);
+    if (condition === 'lessThanEqual') return parseFloat(response) <= parseFloat(skipValue);
+    return true; // default for unsupported conditions
+  };
+
+  const updateQuestionVisibility = (questionId, response) => {
+    let newVisibility = { ...visibleQuestions };
+    questions.forEach(q => {
+      if (q.parentQuestionId === questionId) {
+        newVisibility[q.id] = !evaluateCondition(q.skipCondition, q.skipValue, response);
+      }
+    });
+    setVisibleQuestions(newVisibility);
+  };
   React.useEffect(() => {
 
     console.log(cookies.get('user'));
@@ -61,63 +89,97 @@ function UserView(props) {
   }, [])
 
 
-
-  const handleRadioChange = (selectedOptionIndex, questionIndex) => {
-    const questionId = questions[questionIndex].id;
-    const optionId = questions[questionIndex].options[selectedOptionIndex].id;
-    const optionText = questions[questionIndex].options[selectedOptionIndex].optionText;
-    console.log("optionText",optionText)
-
-    const newResponseData = [...responseData];
-    const responseIndex = newResponseData.findIndex(res => res.questionId === questionId);
-
-    if (responseIndex >= 0) {
-      // Update existing response
-      newResponseData[responseIndex] = { ...newResponseData[responseIndex], optionId, option: selectedOptionIndex, answer: optionText };
+  const handleLocationRequest = (index) => {
+    // Logic to request and handle location
+    // For example, using the Geolocation API
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        // Process the position data
+        setLocation(position.coords.latitude + "," + position.coords.longitude);
+        console.log("Latitude: " + position.coords.latitude +
+          "\nLongitude: " + position.coords.longitude);
+        // You might want to update the answer of the question here
+      }, (error) => {
+        console.error("Error Code = " + error.code + " - " + error.message);
+      });
     } else {
-      // Add new response
-      newResponseData.push({ questionId, optionId, option: selectedOptionIndex, answer: optionText });
+      console.error("Geolocation is not supported by this browser.");
     }
-
-    setResponseData(newResponseData);
-    console.log(newResponseData);
-    
   };
-  const handleTextChange = (text, i) => {
-    const questionId = questions[i].id;
+  // Handle change for radio buttons (MCQ)
+const handleRadioChange = (selectedOptionIndex, questionIndex) => {
+  const questionId = questions[questionIndex].id;
+  const optionText = questions[questionIndex].options[selectedOptionIndex].optionText;
 
-    const newResponseData = responseData.map((res) =>
-      res.questionId === questionId ? { ...res, answer: text } : res
-    );
+  const newResponseData = [...responseData];
+  const responseIndex = newResponseData.findIndex(res => res.questionId === questionId);
 
-    // If the question doesn't have a response yet, add it
-    if (!newResponseData.some((res) => res.questionId === questionId)) {
+  if (responseIndex >= 0) {
+      newResponseData[responseIndex] = { ...newResponseData[responseIndex], answer: optionText };
+  } else {
+      newResponseData.push({ questionId, answer: optionText });
+  }
+
+  setResponseData(newResponseData);
+  updateQuestionVisibility(questionId, optionText);
+};
+
+// Handle change for checkboxes (MMCQ)
+const handleMMCQChange = (optionText, questionIndex) => {
+  const questionId = questions[questionIndex].id;
+  let newResponseData = [...responseData];
+  const responseIndex = newResponseData.findIndex(res => res.questionId === questionId);
+
+  if (responseIndex >= 0) {
+      let answers = newResponseData[responseIndex].answer.split(', ');
+      if (answers.includes(optionText)) {
+          answers = answers.filter(answer => answer !== optionText);
+      } else {
+          answers.push(optionText);
+      }
+      newResponseData[responseIndex].answer = answers.join(', ');
+  } else {
+      newResponseData.push({ questionId, answer: optionText });
+  }
+
+  setResponseData(newResponseData);
+  updateQuestionVisibility(questionId, newResponseData[responseIndex]?.answer);
+};
+
+// Handle change for text inputs
+const handleTextChange = (text, questionIndex) => {
+  const questionId = questions[questionIndex].id;
+
+  const newResponseData = [...responseData];
+  const responseIndex = newResponseData.findIndex(res => res.questionId === questionId);
+
+  if (responseIndex >= 0) {
+      newResponseData[responseIndex] = { ...newResponseData[responseIndex], answer: text };
+  } else {
       newResponseData.push({ questionId, answer: text });
-    }
-    console.log(newResponseData);
+  }
 
-    setResponseData(newResponseData);
-  };
+  setResponseData(newResponseData);
+  updateQuestionVisibility(questionId, text);
+};
 
+// Handle change for Yes/No buttons
+const handleYesNoChange = (value, questionIndex) => {
+  const questionId = questions[questionIndex].id;
 
+  const newResponseData = [...responseData];
+  const responseIndex = newResponseData.findIndex(res => res.questionId === questionId);
 
-  const handleYesNoChange = (value, i) => {
-    const questionId = questions[i].id;
-
-    // Find the index of the existing response for this question, if it exists
-    const index = responseData.findIndex((res) => res.questionId === questionId);
-
-    // Update or add the response
-    const newResponseData = [...responseData];
-    if (index > -1) {
-      newResponseData[index] = { ...newResponseData[index], answer: value };
-    } else {
+  if (responseIndex >= 0) {
+      newResponseData[responseIndex] = { ...newResponseData[responseIndex], answer: value };
+  } else {
       newResponseData.push({ questionId, answer: value });
-    }
-    console.log(newResponseData);
+  }
 
-    setResponseData(newResponseData);
-  };
+  setResponseData(newResponseData);
+  updateQuestionVisibility(questionId, value);
+};
+
 
   const getQuestion = (formId) => {
     formService.getFormQuestions(formId)
@@ -163,27 +225,28 @@ function UserView(props) {
         }
       );
     getQuestion(formId);
-    
+
   }, [props.match.params.formId]);
 
   function submitResponse() {
     var submissionData = {
       formId: formData.id,
       userId: userId,
-      response: responseData
+      response: responseData,
+      location: location
     }
     console.log(submissionData);
-    formService.createFormInstance({surveyId:parseInt(formData.id),userId}).then((data)=>{
+    formService.createFormInstance({ surveyId: parseInt(formData.id), userId, location }).then((data) => {
       console.log(data);
-      formService.createFormResponses(responseData,data.id).then((datas)=>{
+      formService.createFormResponses(responseData, data.id).then((datas) => {
         console.log(datas);
         setIsSubmitted(true)
       }
-      ).catch((err)=>{
+      ).catch((err) => {
         console.log(err);
       }
       )
-    }).catch((err)=>{
+    }).catch((err) => {
       console.log(err);
     })
 
@@ -251,16 +314,16 @@ function UserView(props) {
               <div>
                 <Grid>
 
-                  {questions.map((ques, i) => (
-                    <div key={i} style={{margin:'1rem 0rem'}}>
+                  {questions.map((ques, i) => visibleQuestions[ques.id] && (
+                    <div key={i} style={{ margin: '1rem 0rem' }}>
                       <Paper>
-                        <div style={{margin:'1rem 0rem', padding:'1rem 0rem'}}>
-                          <div style={{ marginBottom:'1rem' }}>
+                        <div style={{ margin: '1rem 0rem', padding: '1rem 0rem' }}>
+                          <div style={{ marginBottom: '1rem' }}>
 
-                          <Typography style={{textAlign:'left', width:'80%', margin:'auto'}}  variant="subtitle1" >{i + 1}. {ques.questionText}</Typography>
-                          {ques.questionImage !== "" && (
-                            <img src={ques.questionImage} width="80%" height="auto" />
-                          )}
+                            <Typography style={{ textAlign: 'left', width: '80%', margin: 'auto' }} variant="subtitle1" >{i + 1}. {ques.questionText}</Typography>
+                            {ques.questionImage !== "" && (
+                              <img src={ques.questionImage} width="80%" height="auto" />
+                            )}
                           </div>
 
                           {ques.questionType === 'MCQ' && (
@@ -271,14 +334,44 @@ function UserView(props) {
                               onChange={(e) => handleRadioChange(parseInt(e.target.value), i)}
                             >
                               {ques.options.map((op, j) => (
-                                <FormControlLabel style={{width:'80%', margin:'auto'}} key={j} value={j} control={<Radio />} label={op.optionText} />
+                                <FormControlLabel style={{ width: '80%', margin: 'auto' }} key={j} value={j} control={<Radio />} label={op.optionText} />
                               ))}
                             </RadioGroup>
                           )}
+                          {ques.questionType === 'MMCQ' && (
+                            <div>
+                              {ques.options.map((op, j) => {
+                                const isOptionSelected = responseData.find(res => res.questionId === ques.id)?.answer?.split(', ').includes(op.optionText) || false;
+                                return (
+                                  <FormControlLabel
+                                    key={j}
+                                    control={
+                                      <Checkbox
+                                        checked={isOptionSelected}
+                                        onChange={() => handleMMCQChange(op.optionText, i)}
+                                      />
+                                    }
+                                    label={op.optionText}
+                                  />
+                                );
+                              })}
+                            </div>
+                          )}
+
+
 
                           {ques.questionType === 'TEXT' && (
                             <TextField
-                            style={{width:'80%', margin:'auto'}}
+                              style={{ width: '80%', margin: 'auto' }}
+                              label="Your Answer"
+                              value={responseData.find((res) => res.questionId === ques.id)?.answer || ''}
+                              onChange={(e) => handleTextChange(e.target.value, i)}
+                            />
+                          )}
+                          {ques.questionType === 'NUM' && (
+                            <TextField
+                              type='number'
+                              style={{ width: '80%', margin: 'auto' }}
                               label="Your Answer"
                               value={responseData.find((res) => res.questionId === ques.id)?.answer || ''}
                               onChange={(e) => handleTextChange(e.target.value, i)}
@@ -286,9 +379,19 @@ function UserView(props) {
                           )}
 
                           {ques.questionType === 'YES_NO' && (
-                            <div style={{width:'80%', margin:'auto', display:'flex', justifyContent: 'space-around'}}>
+                            <div style={{ width: '80%', margin: 'auto', display: 'flex', justifyContent: 'space-around' }}>
                               <Button variant={responseData.find((res) => res.questionId === ques.id)?.answer === "Yes" ? "contained" : "outlined"} onClick={() => handleYesNoChange("Yes", i)}>Yes</Button>
                               <Button variant={responseData.find((res) => res.questionId === ques.id)?.answer === "No" ? "contained" : "outlined"} onClick={() => handleYesNoChange("No", i)}>No</Button>
+                            </div>
+                          )}
+                          {ques.questionType === 'LOC' && (
+                            <div style={{ width: '80%', margin: 'auto', display: 'flex', justifyContent: 'space-around' }}>
+                              <Button
+                                variant="outlined"
+                                onClick={() => handleLocationRequest(i)}
+                              >
+                                Request Location
+                              </Button>
                             </div>
                           )}
                         </div>

@@ -9,6 +9,8 @@ import Typography from '@material-ui/core/Typography';
 import InputBase from '@material-ui/core/InputBase';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
+import Switch from '@material-ui/core/Switch';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
@@ -109,6 +111,7 @@ function Dashboard() {
 
   const [formTitle, setFormTitle] = React.useState("");
   const [formDescription, setFormDescription] = React.useState("");
+  const [requireLocation, setRequireLocation] = React.useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -155,7 +158,8 @@ function Dashboard() {
     var data = {
       title: formTitle,
       description: formDescription,
-      createdBy: user.id
+      createdBy: user.id,
+      locationRequired: requireLocation
     }
     if (data.title !== "" && data.description !== "") {
       formService.createForm(data)
@@ -309,6 +313,18 @@ function Dashboard() {
                 onChange={(e) => { setFormDescription(e.target.value) }}
               />
               <br></br>
+              <br></br>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={requireLocation}
+                    onChange={(e) => { setRequireLocation(e.target.checked) }}
+                    name="requireLocation"
+                    color="primary"
+                  />
+                }
+                label="Require Location"
+              />
             </DialogContent>
             <DialogActions>
               <Button onClick={cancelAddForm} color="primary">

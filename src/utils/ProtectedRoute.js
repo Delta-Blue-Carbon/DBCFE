@@ -10,7 +10,7 @@ import {
 import Main from '../components/layout/Main';
 
 
-export const ProtectedRoute = ({ Component: Component, isEditable = false, page = null,permissionType:permissionType, ...rest }) => {
+export const ProtectedRoute = ({ Component: Component,allowedRoles, isEditable = false, page = null,permissionType:permissionType, ...rest }) => {
 
   const cookies = new Cookies();
   const token = cookies.get('token');
@@ -18,7 +18,23 @@ export const ProtectedRoute = ({ Component: Component, isEditable = false, page 
   const [permission, setPermission] = useState(null);
   const [loading, setLoading] = useState(true);
   const history = useHistory();
+  const user = cookies.get('user');
+  const username = user?.username;
 
+  const checkAccess = () => {
+    switch (username) {
+      case 'Admin':
+        return true; // Admin has access to everything
+      case 'Finance':
+        return allowedRoles.includes('Finance');
+      case 'Community and Gender Development':
+        return allowedRoles.includes('Community and Gender Development');
+      case 'Human Resources':
+        return allowedRoles.includes('Human Resources');
+      default:
+        return false; // Default no access
+    }
+  };
   // useEffect(() => {
   //   // console.log("isEditable", isEditable);
   //   setLoading(true);
@@ -54,7 +70,10 @@ export const ProtectedRoute = ({ Component: Component, isEditable = false, page 
         {...rest}
         render={(props) => {
           // if (page == null) {
-            return <Component exact isEditable={isEditable} {...props} />;
+            return(
+              checkAccess() ? <Component exact isEditable={isEditable} {...props} />: <Redirect to="/un-authorized" />
+
+            )
           // }
           // if(page != null && permission !=null){
           //   if(permissionType == 'add' && permission?.data?.canAdd){

@@ -15,6 +15,14 @@ import Paper from '@material-ui/core/Paper';
 const useStyles = makeStyles({
   table: {
     minWidth: 650,
+    tableLayout: 'fixed', // Add fixed table layout
+  },
+  cell: {
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: 150, // Adjust as needed
+    alignItems: 'center',
   },
 });
 
@@ -36,7 +44,7 @@ function ResponseTab(props) {
   const [formData, setFormData] = React.useState({});
   const [responseData, setResponseData] = React.useState([]);
   const [questions, setQuestions] = React.useState([]);
-  
+
   const getQuestion = () => {
     // setLoadingFormData(true)
     formService.getFormQuestions(props.formData.id)
@@ -46,6 +54,8 @@ function ResponseTab(props) {
           console.log(result.error);
         } else {
           // setInitialQuestions(result);
+          //remove the first question
+          result.shift();
           setQuestions(result)
         }
       },
@@ -125,49 +135,37 @@ function ResponseTab(props) {
 
   
   return (
-       <div>
-          <p> Responses</p>
-          <div>
-            <TableContainer component={Paper}>
-              <Table className={classes.table} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell style={{whiteSpace: 'nowrap'}}>User</TableCell>
-                    {questions.map((ques, i)=>(
-                      <TableCell style={{whiteSpace: 'nowrap'}} key={i} align="right">{ques.questionText}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody >
-                {/* <TableRow>
-                      <TableCell component="th" scope="row">
-                        aanounfdv
-                      </TableCell>
-                      <TableCell align="right">2</TableCell>
-                      <TableCell align="right">no</TableCell>
-                      <TableCell align="right">yes</TableCell>
-                     
-                    </TableRow> */}
-                  {responseData.map((rs, j) => (
-                    <TableRow key={j}>
-                      <TableCell component="th" scope="row">
-                        {rs.userId}
-                      </TableCell>
-                      {questions.map((ques, i)=>(
-                      <TableCell key={i} align="center">{getSelectedOption(ques.id, i,j)}</TableCell>
-                    ))}
-                      
-                    </TableRow>
-                  ))}
-                </TableBody>
-                
-              </Table>
-            </TableContainer>
-          </div>
-
-
-
-       </div>
+    <div>
+    <p>Responses</p>
+    <TableContainer component={Paper}>
+      <Table className={classes.table} aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            <TableCell className={classes.cell} style={{fontWeight:"bold"}}>User</TableCell>
+            {questions.map((ques, i) => (
+              <TableCell className={classes.cell} key={i} align="center" style={{fontWeight:"bold"}}>
+                {ques.questionText}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {responseData.map((rs, j) => (
+            <TableRow key={j}>
+              <TableCell className={classes.cell} component="th" scope="row" >
+                {rs.userId}
+              </TableCell>
+              {questions.map((ques, i) => (
+                <TableCell className={classes.cell} key={i} align="center">
+                  {getSelectedOption(ques.id, i, j)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  </div>
   );
 }
 export default ResponseTab

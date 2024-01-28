@@ -15,6 +15,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import Radio from '@material-ui/core/Radio';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import AccordionActions from '@material-ui/core/AccordionActions';
@@ -29,6 +30,8 @@ import ImageUplaodModel from './ImageUplaodModel';
 import formService from '../../../apis/survey/formService';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import SaveIcon from '@material-ui/icons/Save';
+import SIAQuestions from '../../../utils/SIAQuestions';
+import { Alert } from 'antd';
 
 function QuestionsTab(props) {
 
@@ -112,6 +115,14 @@ function QuestionsTab(props) {
     setLoadingFormData(true)
 
     console.log("Saving modified questions: ", modifiedQuestions);
+
+    //checking if the first question has id -1 if it does that means it is just asking for location and we need to remove it
+    //we also need to get the response of the location question and save it in the database
+
+
+    if (modifiedQuestions[0].id === -1) {
+      modifiedQuestions.shift();
+    }
 
     formService.autoSave(modifiedQuestions, formData.id)
       .then((result) => {
@@ -206,6 +217,40 @@ function QuestionsTab(props) {
     }
     setQuestions(optionsOfQuestion);
   }
+  function AutocompleteQuestionInput({ index, value, handleQuestionValue }) {
+    return (
+      <Autocomplete
+        freeSolo
+        style={{ marginBottom: '18px', width: '80%' }}
+        options={SIAQuestions.map((option) => option[0])}
+        value={value}
+        renderInput={(params) => (
+          <TextField {...params} value={value} label="Type or choose a question" margin="normal" variant="outlined" fullWidth={true}
+          />
+        )}
+        onChange={(event, newValue) => {
+          handleQuestionValue(newValue, index);
+        }}
+      />
+    );
+  }
+
+  const handleLocationRequest = (index) => {
+    // Logic to request and handle location
+    // For example, using the Geolocation API
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        // Process the position data
+        console.log("Latitude: " + position.coords.latitude +
+          "\nLongitude: " + position.coords.longitude);
+        // You might want to update the answer of the question here
+      }, (error) => {
+        console.error("Error Code = " + error.code + " - " + error.message);
+      });
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+  };
 
   function deleteQuestion(i) {
     setLoadingFormData(true)
@@ -247,9 +292,10 @@ function QuestionsTab(props) {
     setQuestions(updatedQuestions);
   }
   function handleQuestionValue(text, i) {
+
     const optionsOfQuestion = questions.map((q, idx) =>
-    idx === i ? { ...q, questionText: text } : q
-  );
+      idx === i ? { ...q, questionText: text } : q
+    );
     setQuestions(optionsOfQuestion);
     // console.log(text);
   }
@@ -320,6 +366,17 @@ function QuestionsTab(props) {
       idx === i ? { ...q, questionType: type } : q
     );
     setQuestions(updatedQuestions);
+  }
+  function handleSkipLogicChange(attribute, value, questionIndex) {
+    setQuestions(questions.map((q, idx) => {
+      if (idx === questionIndex) {
+        return {
+          ...q,
+          [attribute]: value
+        };
+      }
+      return q;
+    }));
   }
 
 
@@ -417,6 +474,7 @@ function QuestionsTab(props) {
                                 </Button>
                               </div>
                               :
+
                               <TextField
                                 disabled
                                 fullWidth
@@ -436,7 +494,8 @@ function QuestionsTab(props) {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: '15px', marginTop: '-15px' }}>
                       <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
                         <Typography style={{ marginTop: '20px' }}>{i + 1}.</Typography>
-                        <TextField
+
+                        {/* <TextField
                           fullWidth={true}
                           placeholder="Question Text"
                           style={{ marginBottom: '18px' }}
@@ -447,7 +506,13 @@ function QuestionsTab(props) {
                           value={ques.questionText}
                           variant="filled"
                           onChange={(e) => { handleQuestionValue(e.target.value, i) }}
+                        /> */}
+                        <AutocompleteQuestionInput
+                          index={i}
+                          value={ques.questionText}
+                          handleQuestionValue={handleQuestionValue}
                         />
+
                         <IconButton aria-label="upload image" onClick={() => { uploadImage(i, null) }}>
                           <CropOriginalIcon />
                         </IconButton>
@@ -471,20 +536,26 @@ function QuestionsTab(props) {
                           ) : ""
                         }
                       </div>
-                      <Select
-                        label="Question Type"
-                        value={ques.questionType ? ques.questionType : "TEXT"}
-                        onChange={(e) => handleQuestionTypeChange(e.target.value, i)}
-                        style={{
-                          alignSelf: "center",
-                          marginBottom: "17px",
-                          width: "20%"
-                        }}
-                      >
-                        <MenuItem value="MCQ">Multiple Choice</MenuItem>
-                        <MenuItem value="TEXT">Text</MenuItem>
-                        <MenuItem value="YES_NO">Yes/No</MenuItem>
-                      </Select>
+                      {
+                        ques.questionType === "LOC" ? <></> :
+
+                          <Select
+                            label="Question Type"
+                            value={ques.questionType ? ques.questionType : "TEXT"}
+                            onChange={(e) => handleQuestionTypeChange(e.target.value, i)}
+                            style={{
+                              alignSelf: "center",
+                              marginBottom: "17px",
+                              width: "20%"
+                            }}
+                          >
+                            <MenuItem value="MCQ">Multi - Choice</MenuItem>
+                            <MenuItem value="MMCQ">Multi - Select</MenuItem>
+                            <MenuItem value="TEXT">Text</MenuItem>
+                            <MenuItem value="YES_NO">Yes/No</MenuItem>
+                            <MenuItem value="NUM">Number</MenuItem>
+                          </Select>
+                      }
                       <div style={{ width: '100%' }}>
                         {
                           ques.questionType === "MCQ" ?
@@ -531,7 +602,7 @@ function QuestionsTab(props) {
                                   </div>
                                 </div>
                               ))}
-                              {ques.options.length < 5 && (
+                              {(
                                 <div>
                                   <Button size="small" onClick={() => { addOption(i) }} style={{ textTransform: 'none', marginLeft: "-5px" }}>
                                     Add Option
@@ -539,36 +610,179 @@ function QuestionsTab(props) {
                                 </div>
                               )}
                             </>
-                            :
-                            ques.questionType === "YES_NO" ?
-                              <div>
-                                <Button
-                                  variant={ques.answer === "Yes" ? "contained" : "outlined"}
-                                  onClick={() => handleYesNoChange("Yes", i)}
-                                >
-                                  Yes
-                                </Button>
-                                <Button
-                                  variant={ques.answer === "No" ? "contained" : "outlined"}
-                                  onClick={() => handleYesNoChange("No", i)}
-                                >
-                                  No
-                                </Button>
-                              </div>
+                            : ques.questionType === "MMCQ" ?
+                              <>
+
+                                {ques.options.map((op, j) => (
+                                  <div key={j}>
+                                    <div style={{ display: 'flex', flexDirection: 'row', marginLeft: '-12.5px', justifyContent: 'space-between', paddingTop: '5px', paddingBottom: '5px' }}>
+                                      <Radio disabled />
+                                      <TextField
+                                        fullWidth={true}
+                                        placeholder="Option text"
+                                        style={{ marginTop: '5px' }}
+                                        value={ques.options[j].optionText}
+                                        onChange={(e) => { handleOptionValue(e.target.value, i, j) }}
+                                      />
+                                      <IconButton aria-label="upload image" onClick={() => { uploadImage(i, j) }}>
+                                        <CropOriginalIcon />
+                                      </IconButton>
+                                      <IconButton aria-label="delete" onClick={() => { removeOption(i, j) }}>
+                                        <CloseIcon />
+                                      </IconButton>
+                                    </div>
+                                    <div>
+                                      {
+                                        checkImageHereOrNotForOption(op.optionImage) ? (
+                                          <div>
+                                            <div style={{ width: '150px', display: 'flex', alignItems: 'flex-start', paddingLeft: '20px' }}>
+                                              <img src={op.optionImage} width="90px" height="auto" />
+                                              <IconButton style={{ marginLeft: '-15px', marginTop: '-15px', zIndex: 999, backgroundColor: 'lightgrey', color: 'grey' }}
+                                                size="small"
+                                                onClick={() => {
+                                                  updateImageLink("", { question: i, option: j })
+                                                }}
+                                              >
+                                                <CloseIcon />
+                                              </IconButton>
+                                            </div>
+                                            <br></br>
+                                            <br></br>
+                                          </div>
+                                        ) : ""
+                                      }
+                                    </div>
+                                  </div>
+                                ))}
+                                {(
+                                  <div>
+                                    <Button size="small" onClick={() => { addOption(i) }} style={{ textTransform: 'none', marginLeft: "-5px" }}>
+                                      Add Option
+                                    </Button>
+                                  </div>
+                                )}
+                              </>
                               :
-                              <TextField
-                                disabled
-                                fullWidth
-                                label="Answer"
-                                value={ques.answer}
-                                onChange={(e) => handleTextAnswerChange(e.target.value, i)}
-                              />
+                              ques.questionType === "YES_NO" ?
+                                <div>
+                                  <Button
+                                    variant={ques.answer === "Yes" ? "contained" : "outlined"}
+                                    onClick={() => handleYesNoChange("Yes", i)}
+                                  >
+                                    Yes
+                                  </Button>
+                                  <Button
+                                    variant={ques.answer === "No" ? "contained" : "outlined"}
+                                    onClick={() => handleYesNoChange("No", i)}
+                                  >
+                                    No
+                                  </Button>
+                                </div>
+                                : ques.questionType === "LOC" ?
+                                  <div>
+                                    <Button
+                                      variant="outlined"
+                                      onClick={() => handleLocationRequest(i)}
+                                    >
+                                      Request Location
+                                    </Button>
+                                  </div>
+                                  :
+                                  ques.questionType === "NUM" ?
+                                    <TextField
+                                      disabled
+                                      fullWidth
+                                      type='number'
+                                      label="Answer"
+                                      value={ques.answer}
+                                      onChange={(e) => handleTextAnswerChange(e.target.value, i)}
+                                    /> :
+                                    <TextField
+                                      disabled
+                                      fullWidth
+                                      label="Answer"
+                                      value={ques.answer}
+                                      onChange={(e) => handleTextAnswerChange(e.target.value, i)}
+                                    />
 
                         }
                       </div>
                       <br></br>
                       <br></br>
                       <Typography variant="body2" style={{ color: 'grey' }}>You can add maximum 5 options. If you want to add more then change in settings. Multiple choice single option is availible</Typography>
+                      {!isEqual(questions, initialQuestions) && ques.id !== -1 &&
+                        (
+                          <p style={{ color: 'red' }}>Only Saved Question will be shown. Please save before adding skip logic.</p>
+
+                        )
+
+                      }
+                      <div style={{width: '100%'}}>
+                        <Typography variant="subtitle1" style={{marginTop: '40px', marginBottom: '10px' }}>
+                          Skip Logic
+                        </Typography>
+
+                        <Grid  alignItems="center" style={{width: '80%'}}>
+                          <Grid xs={12}>
+                            <Select
+                              style={{width: '100%'}}
+                              value={ques.parentQuestionId}
+                              renderValue={selected => {
+                                if (selected === undefined || selected === '') {
+                                  return <span style={{ color: 'grey' }}>Select Parent Question</span>;
+                                }
+                                return selected;
+                              }}
+                              onChange={(e) => handleSkipLogicChange('parentQuestionId', e.target.value, i)}
+                              displayEmpty
+                            >
+                              <MenuItem value="" style={{color: 'GrayText'}}>Select None</MenuItem>
+                              {initialQuestions
+                                .filter((q, idx) => idx !== i && q.id !== -1)
+                                .map((q, idx) => (
+                                  <MenuItem key={idx} value={q.id}>{q.questionText}</MenuItem>
+                                ))}
+                            </Select>
+                          </Grid>
+                          <br />
+
+                          <Grid xs={12}>
+                            <Select
+                              style={{width: '100%'}}
+                              value={ques.skipCondition}
+                              renderValue={selected => {
+                                if (selected === undefined || selected === '') {
+                                  return <span style={{ color: 'grey' }}>Select Categories</span>;
+                                }
+                                return selected;
+                              }}
+                              onChange={(e) => handleSkipLogicChange('skipCondition', e.target.value, i)}
+                              displayEmpty
+                            >
+                              <MenuItem value="" style={{ color: 'GrayText' }}>Select None</MenuItem>
+                              <MenuItem value="equals">Equals To</MenuItem>
+                              <MenuItem value="greaterThan">Greater Than</MenuItem>
+                              <MenuItem value="lessThan">Less Than</MenuItem>
+                              <MenuItem value="greaterThanEqual">Greater Than Equal to</MenuItem>
+                              <MenuItem value="lessThanEqual">Less Than Equal to</MenuItem>
+                              {/* ... other conditions */}
+                            </Select>
+                          </Grid>
+                          <br />
+
+                          <Grid xs={12}>
+                            <TextField
+                              style={{width: '100%'}}
+                              label="Skip Value"
+                              value={ques.skipValue}
+                              onChange={(e) => handleSkipLogicChange('skipValue', e.target.value, i)}
+                              variant="outlined"
+                            />
+                          </Grid>
+                        </Grid>
+                      </div>
+
+
                     </div>
                   </AccordionDetails>
 
