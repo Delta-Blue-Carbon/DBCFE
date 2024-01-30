@@ -13,10 +13,12 @@ import {
   Modal,
   message,
   Select,
-  Spin
+  Spin,
+  Upload
 } from "antd";
+import { InboxOutlined } from '@ant-design/icons';
 
-import { getAllInventories, deleteInventory, updateInventory } from "../../apis/inventory";
+import { getAllInventories, deleteInventory, updateInventory, uploadCSV } from "../../apis/inventory";
 import { useHistory } from "react-router-dom";
 import UserContext from "../../context/UserContext";
 
@@ -115,7 +117,27 @@ function ViewUser({permissions = permissionsProblem}) {
     );
     setFilteredData(filtered);
   };
+  const handleFileUpload = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
 
+    try {
+      setLoading(true)
+      uploadCSV(formData).then((response) => {
+        console.log(response);
+        if (!response.error) {
+          console.log(response);
+          FetchData();
+          success("Inventory added successfully");
+        } else {
+          error(response.data);
+        }
+        setLoading(false)
+      });
+    } catch (error) {
+      message.error('Upload failed');
+    }
+  };
 
   // const { permission } = useContext(UserContext);
 
@@ -404,13 +426,31 @@ function ViewUser({permissions = permissionsProblem}) {
                     />
                   )
                   }
-                  {permissions?.canAdd && <span style={{ marginRight: "20px" }}>
+                  {permissions?.canAdd && <div style={{ alignSelf: "center" }}>
+                  <Upload
+                  style={{cursor: "pointer"}}
+                          name="file"
+                          multiple={false}
+                          beforeUpload={file => {
+                            handleFileUpload(file);
+                            return false; // Prevent default upload behavior
+                          }}
+                          showUploadList={false}
+                        >
+                          <p className="ant-upload-drag-icon" style={{cursor: "pointer"}}>
+                            <InboxOutlined />
+                          </p>
+                        </Upload>
+                    
+                  </div>}
+                  {permissions?.canAdd && <div style={{ marginRight: "20px" }}>
                     <Button type="primary"
                     onClick={handleAddUser}
                     >
                       Add Inventory
                     </Button>
-                  </span>}
+                    
+                  </div>}
                   <Radio.Group
                     onChange={onChangeTableFilter}
                     defaultValue="all"

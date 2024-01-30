@@ -16,6 +16,32 @@ export const getAllInventories = async () => {
     }
 };
 
+export const uploadCSV = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    console.log(formData);
+    for (let [key, value] of formData.entries()) { 
+        console.log(key, value);
+      }      
+
+    try {
+        const response = await apiClient.post('/api/inventories/upload-csv', formData);
+
+        if (response?.status === 200) {
+            return { error: false, data: response?.data };
+        } else {
+            return { error: true, data: `Unexpected status code ${response?.status}` };
+        }
+    } catch (error) {
+        if (error.response) {
+            return { error: true, data: `Error: ${error.response?.data?.error}` };
+        } else {
+            return { error: true, data: `Error uploading file: ${error}` };
+        }
+    }
+};
+
+
 export const createInventory = async (itemData) => {
     try {
         const response = await apiClient.post('/api/inventories', itemData);

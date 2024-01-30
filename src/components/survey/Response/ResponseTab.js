@@ -1,187 +1,242 @@
-import React from 'react'
-import formService from '../../../apis/survey/formService';
-
+import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
-
-
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Typography, Box  } from '@material-ui/core';
+import * as XLSX from 'xlsx';
+import { Bar, Pie } from 'react-chartjs-2';
+import formService from '../../../apis/survey/formService';
 
 const useStyles = makeStyles({
   table: {
     minWidth: 650,
-    tableLayout: 'fixed', // Add fixed table layout
+    tableLayout: 'fixed',
   },
   cell: {
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    maxWidth: 150, // Adjust as needed
+    maxWidth: 150,
     alignItems: 'center',
   },
+  chartContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+    padding: 20,
+    border: '1px solid #ddd',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+  },
+  chartTitle: {
+    marginBottom: 10,
+  }
 });
-
-function createData(name, calories, fat, carbs, protein) {
-  return { name, calories, fat, carbs, protein };
-}
-
-const rows = [
-  createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
-  createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
-  createData('Eclair', 262, 16.0, 24, 6.0),
-  createData('Cupcake', 305, 3.7, 67, 4.3),
-  createData('Gingerbread', 356, 16.0, 49, 3.9),
-];
 
 function ResponseTab(props) {
   const classes = useStyles();
-
-  const [formData, setFormData] = React.useState({});
-  const [responseData, setResponseData] = React.useState([]);
-  const [questions, setQuestions] = React.useState([]);
-
+  const [formData, setFormData] = useState({});
+  const [responseData, setResponseData] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [showStats, setShowStats] = useState(false);
+  const toggleStats = () => {
+    setShowStats(!showStats);
+  };
   const getQuestion = () => {
-    // setLoadingFormData(true)
     formService.getFormQuestions(props.formData.id)
       .then((result) => {
-        console.log(result);
         if (result.error) {
           console.log(result.error);
         } else {
-          // setInitialQuestions(result);
-          //remove the first question
           result.shift();
-          setQuestions(result)
+          setQuestions(result);
         }
-      },
-        error => {
-          const resMessage =
-            (error.response &&
-              error.response.data &&
-              error.response.data.message) ||
-            error.message ||
-            error.toString();
-          console.log(resMessage);
-        }
-      );
-    // setLoadingFormData(false)
-  }
-    React.useEffect(() => {
-      getQuestion();
-      if(props.formData){
-        // setQuestions(props.formData.questions)
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
 
-        setFormData(props.formData)
-      }
-      var formId = props.formId
-      if(formId !== undefined && formId !== ""){
-        formService.getFormResponses(formId)
-        .then((data) => { 
-           console.log(data);     
-            setResponseData(data)
-           },
-           error => {
-           const resMessage =
-               (error.response &&
-               error.response.data &&
-               error.response.data.message) ||
-               error.message ||
-               error.toString();
-               console.log(resMessage);
-           }
-       );
-      }
-    },[props.formId, props.formData]);
-
-
-    function getSelectedOption(qId, i, j){
-      var oneResData = responseData[j];
-      //console.log(oneResData);
-      
-      var selectedOp = oneResData.responses.filter(qss => qss.questionId === qId);
-     console.log("selectedOp",selectedOp);
-
-      if(selectedOp.length > 0){
-        // console.log("selectedOp[0].answer",selectedOp[0].answer);
-        if (selectedOp[0].answer) {
-          // console.log("so does it do here", selectedOp[0].answer)
-          return selectedOp[0].answer
-        } else {
-          var finalOption = questions[i].options.find(oo => oo.id === selectedOp[0].optionId);
-          console.log("finalOption",finalOption);
-          return finalOption?.optionText
-          
-        }
-
-      } else{
-        return "Not Attempted"
-      }
-
-      
-      // return selectedOp[0].optionId;
-      //this.students.filter(stud => stud.Class==className);
+  useEffect(() => {
+    getQuestion();
+    if (props.formData) {
+      setFormData(props.formData);
     }
+    var formId = props.formId;
+    if (formId !== undefined && formId !== "") {
+      formService.getFormResponses(formId)
+        .then((data) => {
+          setResponseData(data);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  }, [props.formId, props.formData]);
 
-    // function getOptionTextById(optionId, questionId, i){
-    // var finalOption = questions[i].options.find(oo => oo.id === optionId);
-    // return finalOption.optionText
-    // }
+  const getSelectedOption = (qId, j) => {
+    var oneResData = responseData[j];
+    var selectedOp = oneResData.responses.filter(qss => qss.questionId === qId);
 
+    if (selectedOp.length > 0) {
+      if (selectedOp[0].answer) {
+        return selectedOp[0].answer;
+      } else {
+        var finalOption = questions.find(ques => ques.id === qId).options.find(oo => oo.id === selectedOp[0].optionId);
+        return finalOption?.optionText || "Not Attempted";
+      }
+    } else {
+      return "Not Attempted";
+    }
+  };
 
+  const exportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(responseData.map((response) => {
+      // Initialize the formatted response with user and survey instance details
+      let formattedResponse = {
+        User: response.userId,
+        SurveyInstance: response.surveyInstanceId,
+        CreatedAt: response.createdAt
+      };
   
+      // Process each response item to map question text to the corresponding answer
+      response.responses.forEach((resp) => {
+        // Find the question text using the questionId
+        const questionText = questions.find(q => q.id === resp.questionId)?.questionText || "Unknown Question";
+  
+        // Add the question-answer pair to the formatted response
+        formattedResponse[questionText] = resp.answer;
+      });
+  
+      return formattedResponse;
+    }));
+  
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Responses");
+    XLSX.writeFile(wb, "SurveyResponses.xlsx");
+  };
+  
+
+  const generateChartData = (question) => {
+    let chartData = { labels: [], datasets: [] };
+  
+    if (question.questionType === 'NUM') {
+      // Pie Chart
+      chartData.datasets.push({
+        label: question.questionText,
+        data: [],
+        backgroundColor: [],
+      });
+  
+      responseData.forEach(response => {
+        const answer = response.responses.find(r => r.questionId === question.id)?.answer;
+        if (answer) {
+          const index = chartData.labels.indexOf(answer);
+          if (index === -1) {
+            chartData.labels.push(answer);
+            chartData.datasets[0].data.push(1);
+            chartData.datasets[0].backgroundColor.push(`#${Math.floor(Math.random() * 16777215).toString(16)}`);
+          } else {
+            chartData.datasets[0].data[index] += 1;
+          }
+        }
+      });
+    } else if (question.questionType === 'YES_NO' || question.questionType === 'MCQ' || question.questionType === 'MMCQ') {
+      // Bar Chart
+      chartData.datasets.push({
+        label: question.questionText,
+        data: [],
+        backgroundColor: [],
+      });
+  
+      question.options.forEach((option) => {
+        chartData.labels.push(option.optionText);
+        let count = responseData.filter(response => {
+          const answer = response.responses.find(r => r.questionId === question.id)?.answer;
+          return answer === option.optionText;
+        }).length;
+        chartData.datasets[0].data.push(count);
+        chartData.datasets[0].backgroundColor.push(`#${Math.floor(Math.random() * 16777215).toString(16)}`);
+      });
+    } else if (question.questionType === 'TEXT') {
+      // Count of responses
+      chartData.labels.push('Responses');
+      chartData.datasets.push({
+        label: question.questionText,
+        data: [responseData.filter(response => {
+          const answer = response.responses.find(r => r.questionId === question.id)?.answer;
+          return answer !== undefined && answer !== null && answer !== '';
+        }).length],
+        backgroundColor: ['rgba(54, 162, 235, 0.2)'],
+      });
+    }
+  
+    return chartData;
+  };
+  
+  
+
+  const renderChart = (question) => {
+    let chartType = question.questionType;
+    let chartData = generateChartData(question);
+  
+    switch (chartType) {
+      case 'NUM':
+        return <Pie data={chartData} />;
+      case 'YES_NO':
+      case 'MCQ':
+      case 'MMCQ':
+        return <Bar data={chartData} options={{ scales: { y: { beginAtZero: true } } }} />;
+      case 'TEXT':
+        return <Bar data={chartData} options={{ scales: { y: { beginAtZero: true } } }} />;
+      default:
+        return null;
+    }
+  };
+  
+
   return (
     <div>
-    <p>Responses</p>
-    <TableContainer component={Paper}>
-      <Table className={classes.table} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <TableCell className={classes.cell} style={{fontWeight:"bold"}}>User</TableCell>
-            {questions.map((ques, i) => (
-              <TableCell className={classes.cell} key={i} align="center" style={{fontWeight:"bold"}}>
-                {ques.questionText}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {responseData.map((rs, j) => (
-            <TableRow key={j}>
-              <TableCell className={classes.cell} component="th" scope="row" >
-                {rs.userId}
-              </TableCell>
+      <p>Responses</p>
+      <Button onClick={exportToExcel}>Export to Excel</Button>
+      <TableContainer component={Paper}>
+        <Table className={classes.table} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <TableCell className={classes.cell} style={{ fontWeight: "bold" }}>User</TableCell>
               {questions.map((ques, i) => (
-                <TableCell className={classes.cell} key={i} align="center">
-                  {getSelectedOption(ques.id, i, j)}
+                <TableCell className={classes.cell} key={i} align="center" style={{ fontWeight: "bold" }}>
+                  {ques.questionText}
                 </TableCell>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </div>
+          </TableHead>
+          <TableBody>
+            {responseData.map((rs, j) => (
+              <TableRow key={j}>
+                <TableCell className={classes.cell} component="th" scope="row">
+                  {rs.userId}
+                </TableCell>
+                {questions.map((ques, i) => (
+                  <TableCell className={classes.cell} key={i} align="center">
+                    {getSelectedOption(ques.id, j)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Button onClick={toggleStats}>
+        {showStats ? 'Hide Stats' : 'Generate Stats'}
+      </Button>
+      { showStats && questions.map((question, i) => (
+        <Box key={i} className={classes.chartContainer}>
+          <Typography variant="h6" className={classes.chartTitle}>
+            {question.questionText}
+          </Typography>
+          {renderChart(question)}
+        </Box>
+      ))}
+    </div>
   );
 }
-export default ResponseTab
 
-
-var trash = `
-<TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.name}>
-                      <TableCell component="th" scope="row">
-                        {row.name}
-                      </TableCell>
-                      <TableCell align="right">{row.calories}</TableCell>
-                      <TableCell align="right">{row.fat}</TableCell>
-                      <TableCell align="right">{row.carbs}</TableCell>
-                      <TableCell align="right">{row.protein}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>`
+export default ResponseTab;
