@@ -59,6 +59,7 @@ function UserView(props) {
 
   const evaluateCondition = (condition, skipValue, response) => {
     if (condition === 'equals') return response === skipValue;
+    if (condition === 'notEquals') return response != skipValue;
     if (condition === 'greaterThan') return parseFloat(response) > parseFloat(skipValue);
     if (condition === 'lessThan') return parseFloat(response) < parseFloat(skipValue);
     if (condition === 'greaterThanEqual') return parseFloat(response) >= parseFloat(skipValue);

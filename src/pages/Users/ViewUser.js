@@ -20,6 +20,7 @@ import { getAllUsers, deleteUser } from "../../apis/user";
 import { useHistory } from "react-router-dom";
 import UserContext from "../../context/UserContext";
 import Cookies from "universal-cookie";
+import Permission from "../../utils/Permissions";
 
 const originalDataSource1 = [{
   applicationUserId: 4,
@@ -44,9 +45,9 @@ const originalDataSource1 = [{
 },]
 
 var permissionsProblem = {
-  canEdit: true,
+  canEdit: false,
   canDelete: false,
-  canAdd: true,
+  canAdd: false,
   canView: true,
 }
 
@@ -56,9 +57,21 @@ function ViewUser({permissions = permissionsProblem}) {
   const cookies = new Cookies();
   const user = cookies.get('user');
   const username = user?.username;
-  if (username != "Admin") {
-    // permissions.canEdit = false;
-    permissions.canDelete = false;
+  if (username == "Admin") {
+    permissions.canEdit = true;
+    permissions.canDelete = true;
+    permissions.canAdd = true;
+    permissions.canView = true;
+  }else{
+    if(Permission.Users.canView.includes(username)){
+      permissions.canView = true;
+    }
+    if(Permission.Users.canAdd.includes(username)){
+      permissions.canAdd = true;
+    }
+    if(Permission.Users.canEdit.includes(username)){
+      permissions.canEdit = true;
+    }
   }
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
@@ -251,6 +264,7 @@ function ViewUser({permissions = permissionsProblem}) {
         );
       },
     }, 
+    permissions.canDelete &&
     {
       title: "Delete",
       dataIndex: "Delete",

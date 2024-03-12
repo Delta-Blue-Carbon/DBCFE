@@ -124,6 +124,20 @@ export default function SignIn(props) {
   };
 
 
+  const checkAccess = (username) => {
+    switch (username) {
+      case 'Admin':
+        return props.history.push("/dashboard"); // Admin has access to everything
+      case 'Finance':
+        return props.history.push("/inventories"); 
+      case 'Community and Gender Development':
+        return props.history.push("/forms");
+      case 'Human Resources':
+        return props.history.push("/users");
+      default:
+        return props.history.push("/forms");
+    }
+  };
   const onFinish = (values) => {
     // console.log("Success:", values);
     setLoading(true)
@@ -132,8 +146,9 @@ export default function SignIn(props) {
       if (!response.error) {
         console.log(response);
         cookies.set('token', response.data.token, { path: '/'});
-        cookies.set('user', response.data.user, { path: '/'});
-        props.history.push("/forms");
+        cookies.set('user', response.data.user, { path: '/'}); 
+        const username = response?.data?.user?.username;
+        checkAccess(username);
       } else {
         error(response.data);
       }

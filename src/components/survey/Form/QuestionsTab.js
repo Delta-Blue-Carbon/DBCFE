@@ -761,6 +761,7 @@ function QuestionsTab(props) {
                             >
                               <MenuItem value="" style={{ color: 'GrayText' }}>Select None</MenuItem>
                               <MenuItem value="equals">Equals To</MenuItem>
+                              <MenuItem value="notEquals">Not Equals</MenuItem>
                               <MenuItem value="greaterThan">Greater Than</MenuItem>
                               <MenuItem value="lessThan">Less Than</MenuItem>
                               <MenuItem value="greaterThanEqual">Greater Than Equal to</MenuItem>

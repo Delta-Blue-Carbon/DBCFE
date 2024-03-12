@@ -88,6 +88,7 @@ function App() {
               <Route exact path="/un-authorized" Component={UnAuthorized} />
               <Route component={NotFoundPage} />
             </Switch>
+              <Route exact path="/un-authorized" Component={UnAuthorized} />
 
             {/* <ProtectedRoute exact path="/un-authorized" Component={UnAuthorized} /> */}
           </Main>
