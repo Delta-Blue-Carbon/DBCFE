@@ -1,0 +1,20 @@
+name: MS Teams Notification
+
+# Trigger the workflow on push and pull_request events
+on: [push, pull_request]
+
+jobs:
+  build:
+    # Specify the runner that will execute this job
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the code at the current commit
+      - uses: actions/checkout@v2
+
+      # Send a notification to Microsoft Teams
+      - uses: dchourasia/ms-teams-notification@1.0
+        if: always() # This ensures the step runs regardless of previous step results
+        with:
+          github-token: ${{ github.token }} # GitHub token for authorization
+          webhook-uri: ${{ secrets.TEAMS_WEBHOOK_URL }} # The Teams webhook URL, stored as a secret
