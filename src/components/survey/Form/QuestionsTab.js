@@ -69,7 +69,7 @@ function QuestionsTab(props) {
 
   React.useEffect(() => {
 
-    console.log("bhens ki")
+    // console.log("bhens ki")
     // setLoadingFormData(false)
   }, [initialQuestions])
 
@@ -82,8 +82,7 @@ function QuestionsTab(props) {
     if (props.formData.questions !== undefined) {
       console.log(props.formData.questions.length);
       if (props.formData.questions.length === 0) {
-        console.log("hehe?");
-        setQuestions([{ questionText: "Question", options: [{ optionText: "Option 1" }], open: false, questionType: "TEXT" }]);
+        setQuestions([{ questionText: "Question", options: [{ optionText: "Option 1" }], open: false, questionType: "TEXT", skipLogics: [] }]);
       } else {
         setQuestions(props.formData.questions)
       }
@@ -164,7 +163,7 @@ function QuestionsTab(props) {
   function addMoreQuestionField() {
     expandCloseAll(); //I AM GOD
 
-    setQuestions(questions => [...questions, { surveyId: props.formData.id, options: [], questionText: "Question", open: false, questionType: "TEXT" }]);
+    setQuestions(questions => [...questions, { surveyId: props.formData.id, options: [], questionText: "Question", open: false, questionType: "TEXT",skipLogics: [] }]);
   }
 
   function copyQuestion(i) {
@@ -367,18 +366,54 @@ function QuestionsTab(props) {
     );
     setQuestions(updatedQuestions);
   }
-  function handleSkipLogicChange(attribute, value, questionIndex) {
+  function handleSkipLogicChange(attribute, value, questionIndex, logicIndex) {
     setQuestions(questions.map((q, idx) => {
       if (idx === questionIndex) {
-        return {
-          ...q,
+        // Clone the current skipLogics array
+        const updatedSkipLogics = [...q.skipLogics];
+        // Update the specified skip logic's attribute
+        updatedSkipLogics[logicIndex] = {
+          ...updatedSkipLogics[logicIndex],
           [attribute]: value
         };
+        // Return the updated question with the modified skipLogics array
+        return { ...q, skipLogics: updatedSkipLogics };
       }
       return q;
     }));
   }
-
+  
+  function addSkipLogic(questionIndex) {
+    setQuestions(questions.map((q, idx) => {
+      if (idx === questionIndex) {
+        // Define a default new skip logic object
+        const newSkipLogic = {
+          parentQuestionId: '',
+          skipCondition: '',
+          skipValue: ''
+        };
+        // Add the new skip logic object to the current skipLogics array
+        const updatedSkipLogics = [...q.skipLogics, newSkipLogic];
+        // Return the updated question with the new skip logic added
+        return { ...q, skipLogics: updatedSkipLogics };
+      }
+      return q;
+    }));
+  }
+  
+  
+  function removeSkipLogic(questionIndex, logicIndex) {
+    setQuestions(questions.map((q, idx) => {
+      if (idx === questionIndex) {
+        // Filter out the skip logic at the specified index
+        const updatedSkipLogics = q.skipLogics.filter((_, index) => index !== logicIndex);
+        // Return the updated question with the skip logic removed
+        return { ...q, skipLogics: updatedSkipLogics };
+      }
+      return q;
+    }));
+  }
+  
 
   function expandCloseAll() {
     let qs = [...questions];
@@ -722,18 +757,19 @@ function QuestionsTab(props) {
                           Skip Logic
                         </Typography>
 
-                        <Grid  alignItems="center" style={{width: '80%'}}>
-                          <Grid xs={12}>
+                        {ques.skipLogics.map((logic, logicIndex) => (
+                          <Grid  alignItems="center" style={{width: '80%',marginBottom: 10}} key={logicIndex}>
+                          <Grid xs={12} style={{ marginBottom: 10 }}>
                             <Select
                               style={{width: '100%'}}
-                              value={ques.parentQuestionId}
+                              value={logic.parentQuestionId}
                               renderValue={selected => {
                                 if (selected === undefined || selected === '') {
                                   return <span style={{ color: 'grey' }}>Select Parent Question</span>;
                                 }
                                 return selected;
                               }}
-                              onChange={(e) => handleSkipLogicChange('parentQuestionId', e.target.value, i)}
+                              onChange={(e) => handleSkipLogicChange('parentQuestionId', e.target.value, i, logicIndex)}
                               displayEmpty
                             >
                               <MenuItem value="" style={{color: 'GrayText'}}>Select None</MenuItem>
@@ -749,14 +785,14 @@ function QuestionsTab(props) {
                           <Grid xs={12}>
                             <Select
                               style={{width: '100%'}}
-                              value={ques.skipCondition}
+                              value={logic.skipCondition}
                               renderValue={selected => {
                                 if (selected === undefined || selected === '') {
                                   return <span style={{ color: 'grey' }}>Select Categories</span>;
                                 }
                                 return selected;
                               }}
-                              onChange={(e) => handleSkipLogicChange('skipCondition', e.target.value, i)}
+                              onChange={(e) => handleSkipLogicChange('skipCondition', e.target.value, i, logicIndex)}
                               displayEmpty
                             >
                               <MenuItem value="" style={{ color: 'GrayText' }}>Select None</MenuItem>
@@ -775,12 +811,29 @@ function QuestionsTab(props) {
                             <TextField
                               style={{width: '100%'}}
                               label="Skip Value"
-                              value={ques.skipValue}
-                              onChange={(e) => handleSkipLogicChange('skipValue', e.target.value, i)}
+                              value={logic.skipValue}
+                              onChange={(e) => handleSkipLogicChange('skipValue', e.target.value, i, logicIndex)}
                               variant="outlined"
                             />
                           </Grid>
-                        </Grid>
+
+                            {/* Remove Logic Button */}
+                            {ques.skipLogics.length > 1 && (
+                              <Grid item xs={12}>
+                                <Button onClick={() => removeSkipLogic(i, logicIndex)} style={{ marginTop: 10 }}>
+                                  Remove Condition
+                                </Button>
+                              </Grid>
+                            )}
+                          </Grid>
+                        ))}
+                        {
+                          ques.skipLogics.length < 3 && (
+                            <Button onClick={() => addSkipLogic(i)} style={{ marginTop: 10 }}>
+                              Add Skip Logic
+                            </Button>
+                          )
+                        }
                       </div>
 
 

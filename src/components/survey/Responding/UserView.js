@@ -69,13 +69,20 @@ function UserView(props) {
 
   const updateQuestionVisibility = (questionId, response) => {
     let newVisibility = { ...visibleQuestions };
-    questions.forEach(q => {
-      if (q.parentQuestionId === questionId) {
-        newVisibility[q.id] = !evaluateCondition(q.skipCondition, q.skipValue, response);
+    for (let qu of questions) {
+      for (let q of qu.skipLogics) {
+        console.log(q.parentQuestionId, questionId, q.parentQuestionId === questionId, q.skipCondition, q.skipValue, response, evaluateCondition(q.skipCondition, q.skipValue, response));
+        if (q.parentQuestionId === questionId) {
+          newVisibility[qu.id] = !evaluateCondition(q.skipCondition, q.skipValue, response);
+          if(evaluateCondition(q.skipCondition, q.skipValue, response)){
+            break;
+          }
+        }
       }
-    });
+    }
     setVisibleQuestions(newVisibility);
   };
+  
   React.useEffect(() => {
 
     console.log(cookies.get('user'));
