@@ -49,7 +49,8 @@ const SIAQuestions = [
     ["Number of people in the community reporting that there are positive impacts of project activities on the conservation, restoration and sustainable management of community related HCVs Areas", "SIA-HCV04 to HCV06"],
     ["Do you agree to and endorse the mitigation measures suggested for fuelwood collectors, livestock grazers, and wildlife poachers and will they mitigate the short-term negative impact on this group of people", ""],
     ["Do you agree to and endorse the mitigation measures suggested for changing the behavior of traders, middlemen and employers? And do you think that the suggested measures will help in changing the behavior of traders, middlemen and employers", ""],
-    ["Do you think that awareness raising and advocacy work for bringing about behavioral changes in the upstream dwellers are needed? And do you support the awareness raising and advocacy work for bringing about behavioral changes so that environmental water flows into the Delta Area can be ensured", ""]
+    ["Do you think that awareness raising and advocacy work for bringing about behavioral changes in the upstream dwellers are needed? And do you support the awareness raising and advocacy work for bringing about behavioral changes so that environmental water flows into the Delta Area can be ensured", ""],
+    ["Specify", ""]
 ];
 
 export default SIAQuestions;
